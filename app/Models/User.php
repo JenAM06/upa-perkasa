@@ -2,44 +2,63 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\HasLegacyRoles;
+use App\Support\LegacyStorage;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Tabel `users` (78 ribu akun semua peran). Kolom `email` untuk mahasiswa sering berisi NIM.
+ * `suspend` berisi string 'true'/'false' (enum lama).
+ */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasLegacyRoles, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    protected $fillable = ['name', 'email', 'socialite_id', 'socialite_name', 'foto', 'kontak', 'password', 'suspend'];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token', 'api_token'];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
+    protected $attributes = ['suspend' => 'false'];
+
+    protected function casts(): array
+    {
+        return ['password' => 'hashed'];
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspend === 'true';
+    }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return LegacyStorage::url(config('perkasa.upload_folders.user'), $this->foto);
+    }
+
+    public function company(): HasOne
+    {
+        return $this->hasOne(Company::class);
+    }
+
+    public function mahasiswa(): HasOne
+    {
+        return $this->hasOne(Mahasiswa::class);
+    }
+
+    public function mahasiswaNonUnmul(): HasOne
+    {
+        return $this->hasOne(MahasiswaNonUnmul::class);
+    }
+
+    public function adminProdi(): HasOne
+    {
+        return $this->hasOne(AdminProdi::class);
+    }
+
+    public function adminFakultas(): HasOne
+    {
+        return $this->hasOne(AdminFakultas::class);
+    }
 }

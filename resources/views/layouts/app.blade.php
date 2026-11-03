@@ -6,6 +6,7 @@
     <title>@yield('title', 'UPA Perkasa Unmul') | UPA Perkasa Unmul</title>
     <meta name="description" content="@yield('meta_description', 'Unit Pelayanan Alumni dan Pengembangan Karir Universitas Mulawarman.')">
     <link rel="icon" type="image/png" href="{{ asset('img/logo/logo-icon.png') }}">
+    @stack('meta')
 
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">

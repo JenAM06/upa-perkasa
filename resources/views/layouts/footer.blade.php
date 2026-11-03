@@ -2,19 +2,7 @@
     Footer - UPA Perkasa Unmul
     Reusable via @include('layouts.footer') from app.blade.php
 --}}
-@php
-    // Dummy data - replace with data from backend later
-    $footerLinks = [
-        ['label' => 'Universitas Mulawarman', 'url' => 'https://unmul.ac.id/'],
-        ['label' => 'PPID Universitas Mulawarman', 'url' => 'https://ppid.unmul.ac.id/'],
-        ['label' => 'Tracer Study', 'url' => 'https://perkasa.unmul.ac.id/perkasa2/tracer-study'],
-    ];
-    $footerSocial = [
-        ['label' => 'Instagram', 'icon' => 'bi-instagram', 'url' => 'https://www.instagram.com/upa_perkasa/'],
-        ['label' => 'LinkedIn', 'icon' => 'bi-linkedin', 'url' => 'https://www.linkedin.com/in/upa-perkasa-unmul-5b6677139/'],
-        ['label' => 'YouTube', 'icon' => 'bi-youtube', 'url' => 'https://www.youtube.com/@tvperkasa9216'],
-    ];
-@endphp
+{{-- $footerLinks, $footerSocial, $contact dari App\View\Composers\NavigationComposer (config/perkasa.php) --}}
 
 <footer class="upa-footer">
     <div class="upa-footer__glow upa-footer__glow--a"></div>
@@ -67,14 +55,15 @@
                     <li class="upa-footer__icon-row">
                         <i class="bi bi-envelope"></i>
                         <div class="upa-footer__icon-row-content">
-                            <a href="mailto:upt.perkasa@unmul.ac.id">upt.perkasa@unmul.ac.id</a>
-                            <a href="mailto:uptperkasaunmul@gmail.com">uptperkasaunmul@gmail.com</a>
+                            @foreach ($contact['emails'] as $email)
+                                <a href="mailto:{{ $email }}">{{ $email }}</a>
+                            @endforeach
                         </div>
                     </li>
                     <li class="upa-footer__icon-row">
                         <i class="bi bi-whatsapp"></i>
                         <div class="upa-footer__icon-row-content">
-                            <a href="https://wa.me/6208115828004" target="_blank" rel="noopener">08115828004 - Admin</a>
+                            <a href="https://wa.me/62{{ ltrim(preg_replace('/\D/', '', $contact['whatsapp']), '0') }}" target="_blank" rel="noopener">{{ $contact['whatsapp_label'] }}</a>
                         </div>
                     </li>
                 </ul>
@@ -85,7 +74,7 @@
                 <ul class="upa-footer__list">
                     <li class="upa-footer__icon-row">
                         <i class="bi bi-geo-alt"></i>
-                        <a href="https://maps.app.goo.gl/pqkrj5Ew4vJCkkD76" target="_blank" rel="noopener">Gedung Prof. Masjaya Lt. 1, Universitas Mulawarman</a>
+                        <a href="{{ $contact['maps_url'] }}" target="_blank" rel="noopener">{{ $contact['address'] }}</a>
                         <span></span>
                     </li>
                 </ul>

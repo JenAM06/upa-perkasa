@@ -1,25 +1,18 @@
-{{--
-    Job listing card — grid item on "Semua Lowongan Pekerjaan".
-    Links through to the company's vacancy-detail page.
-
-    Layout: small logo on the left that stretches the full height of the
-    card, content column on the right (title/badge, tags, company name,
-    then a divider line with the posted date + "Lihat Selengkapnya" pinned
-    to the bottom).
-
-    Props:
-        title       string   Job title
-        company     string   Company name
-        logo        string|null
-        tags        array    e.g. ['S1', 'S2']
-        totalJobs   int      Number of open positions at this company
-        postedDate  string   e.g. '15 Okt 2024' (date only, no time)
-        url         string
---}}
-<a href="{{ $url ?? '#' }}" class="upa-lowongan-card upa-hover-lift">
+{{-- Kartu lowongan (halaman daftar). Parameter: $loker (App\Models\Loker, relasi company.user dimuat) --}}
+@php
+    $company = $loker->company;
+    [$badgeClass, $badgeLabel] = [
+        'dibuka' => ['upa-badge-open', 'DIBUKA'],
+        'segera_berakhir' => ['upa-badge-warning', 'SEGERA BERAKHIR'],
+        'ditutup' => ['upa-badge-danger', 'DITUTUP'],
+    ][$loker->status];
+@endphp
+<a href="{{ route('publikasi.lowongan-detail', $loker->route_slug) }}" class="upa-lowongan-card upa-hover-lift">
     <div class="upa-lowongan-card__logo">
-        @if (!empty($logo))
-            <img src="{{ $logo }}" alt="Logo {{ $company }}">
+        @if ($company?->logo_url)
+            <img src="{{ $company->logo_url }}" alt="Logo {{ $company->company_name }}" loading="lazy">
+        @elseif ($company)
+            <span class="fw-bold">{{ $company->initials }}</span>
         @else
             <i class="bi bi-building"></i>
         @endif
@@ -28,30 +21,24 @@
     <div class="upa-lowongan-card__body">
         <div class="upa-lowongan-card__head">
             <div class="upa-lowongan-card__head-text">
-                <h3 class="upa-lowongan-card__title">{{ $title }}</h3>
+                <h3 class="upa-lowongan-card__title">{{ $loker->name_loker }}</h3>
             </div>
-            @if (!empty($totalJobs))
-                <span class="upa-badge upa-badge-yellow upa-lowongan-card__badge">{{ $totalJobs }} LOWONGAN</span>
-            @endif
+            <span class="upa-badge {{ $badgeClass }} upa-lowongan-card__badge">{{ $badgeLabel }}</span>
         </div>
 
-        @if (!empty($tags))
+        @if (filled(trim((string) $loker->lokasi, ' -')))
             <div class="upa-lowongan-card__tags">
-                <span class="upa-lowongan-card__meta-label">Mencari:</span>
-                @foreach ($tags as $tag)
-                    <span class="upa-lowongan-tag">{{ $tag }}</span>
-                @endforeach
+                <span class="upa-lowongan-card__meta-label"><i class="bi bi-geo-alt"></i></span>
+                <span class="upa-lowongan-tag">{{ \Illuminate\Support\Str::limit($loker->lokasi, 50) }}</span>
             </div>
         @endif
 
-        <p class="upa-lowongan-card__company">{{ $company }}</p>
+        <p class="upa-lowongan-card__company">{{ $company?->company_name }}</p>
 
         <div class="upa-lowongan-card__spacer"></div>
 
         <div class="upa-lowongan-card__footer">
-            @if (!empty($postedDate))
-                <span class="upa-lowongan-card__posted"><i class="bi bi-calendar3"></i>Diposting: {{ $postedDate }}</span>
-            @endif
+            <span class="upa-lowongan-card__posted"><i class="bi bi-calendar3"></i>Batas: {{ $loker->tanggal_loker?->translatedFormat('d M Y') ?? '-' }}</span>
             <span class="upa-lowongan-card__link">Lihat Selengkapnya <i class="bi bi-arrow-right ms-1"></i></span>
         </div>
     </div>

@@ -1,74 +1,71 @@
 <?php
 
+use App\Http\Controllers\Api\CekMahasiswaController;
+use App\Http\Controllers\Public\AgendaController;
+use App\Http\Controllers\Public\BeritaController;
+use App\Http\Controllers\Public\EventController;
+use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\LegacyRedirectController;
+use App\Http\Controllers\Public\LowonganController;
+use App\Http\Controllers\Public\PageController;
+use App\Http\Controllers\Public\PengumumanController;
+use App\Support\LegacyUrl;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| PREVIEW-ONLY ROUTES
+| Portal publik UPA Perkasa
 |--------------------------------------------------------------------------
-| File ini HANYA untuk keperluan preview lokal di Laragon, supaya frontend
-| yang sudah dibuat bisa langsung dilihat di browser tanpa menunggu backend.
-|
-| Semua route di bawah pakai Route::view() - artinya cuma memetakan
-| URL -> file Blade, TANPA controller, TANPA logic, TANPA query database.
-| Ini konsisten dengan batasan awal: "hanya mengerjakan bagian Frontend/View".
-|
-| Nanti kalau sudah diintegrasikan dengan backend sungguhan, file ini WAJIB
-| diganti/disesuaikan oleh tim backend (pakai Controller, middleware auth,
-| dsb sesuai kebutuhan mereka). Nama-nama route di bawah (home, profile.*)
-| sengaja disamakan dengan yang sudah dipakai di dalam Blade (route('...')
-| pada navbar, footer, breadcrumb), jadi kalau tim backend membuat ulang
-| route dengan nama yang sama, tidak ada satupun file Blade yang perlu diubah.
-|--------------------------------------------------------------------------
+| Nama rute sama dengan yang dipakai di Blade frontend.
 */
 
-Route::view('/', 'home.index')->name('home');
+Route::get('/', HomeController::class)->name('home');
 
-Route::view('/profil/sejarah', 'profile.sejarah')->name('profile.sejarah');
-Route::view('/profil/visi-misi', 'profile.visi-misi')->name('profile.visi-misi');
-Route::view('/profil/tujuan-sasaran', 'profile.tujuan-sasaran')->name('profile.tujuan-sasaran');
-Route::view('/profil/struktur', 'profile.struktur')->name('profile.struktur');
-Route::view('/profil/pimpinan', 'profile.pimpinan')->name('profile.pimpinan');
-Route::view('/profil/program-kerja', 'profile.program-kerja')->name('profile.program-kerja');
-Route::view('/profil/logo', 'profile.logo')->name('profile.logo');
-Route::view('/profil/panduan-tracer-study', 'profile.panduan-tracer-study')->name('profile.panduan-tracer-study');
+// Halaman berbasis tabel `pages` (slug diatur di config/perkasa.php, isi diedit admin)
+Route::controller(PageController::class)->group(function () {
+    Route::get('/profil/sejarah', 'section')->name('profile.sejarah');
+    Route::get('/profil/visi-misi', 'section')->name('profile.visi-misi');
+    Route::get('/profil/tujuan-sasaran', 'section')->name('profile.tujuan-sasaran');
+    Route::get('/profil/struktur', 'section')->name('profile.struktur');
+    Route::get('/profil/program-kerja', 'section')->name('profile.program-kerja');
+    Route::get('/profil/logo', 'section')->name('profile.logo');
+    Route::get('/profil/panduan-tracer-study', 'section')->name('profile.panduan-tracer-study');
+    Route::get('/profil/pimpinan', 'pimpinan')->name('profile.pimpinan');
 
-Route::get('/publikasi/berita', function () {
-    return view('publikasi.berita');
-})->name('publikasi.berita');
+    Route::get('/report/laporan-tahunan', 'section')->name('report.laporan-tahunan');
+    Route::get('/report/tracer-study', 'section')->name('report.tracer-study');
+    Route::get('/report/capaian-iku1', 'section')->name('report.capaian-iku1');
 
-Route::get('/publikasi/berita/{slug}', function (string $slug) {
-    return view('publikasi.berita-detail'); 
-})->name('publikasi.berita-detail');
+    Route::get('/ppid/informasi-wajib-berkala', 'section')->name('ppid.wajib-berkala');
+    Route::get('/ppid/informasi-tersedia-setiap-saat', 'section')->name('ppid.tersedia-setiap-saat');
+    Route::get('/ppid/informasi-yang-dikecualikan', 'section')->name('ppid.dikecualikan');
 
-Route::view('/publikasi/lowongan-pekerjaan', 'publikasi.lowongan')->name('publikasi.lowongan');
-Route::view('/publikasi/lowongan-pekerjaan/{slug}', 'publikasi.lowongan-perusahaan')->name('publikasi.lowongan-detail');
-
-Route::get('/publikasi/agenda-kegiatan', function () {
-    return view('publikasi.agenda');
-})->name('publikasi.agenda');
-
-Route::get('/publikasi/agenda-kegiatan/{slug}', function ($slug) {
-    return view('publikasi.agenda-detail');
-})->name('publikasi.agenda-detail');
-
-Route::get('/publikasi/pengumuman', function () {
-    return view('publikasi.pengumuman');
-})->name('publikasi.pengumuman');
-
-Route::get('/publikasi/pengumuman/{slug}', function ($slug) {
-    return view('publikasi.pengumuman-detail');
-})->name('publikasi.pengumuman-detail');
-
-Route::prefix('report')->name('report.')->group(function () {
-    Route::view('/laporan-tahunan', 'report.laporan-tahunan')->name('laporan-tahunan');
-    Route::view('/tracer-study',    'report.tracer-study')->name('tracer-study');
-    Route::view('/capaian-iku1',    'report.capaian-iku1')->name('capaian-iku1');
+    Route::get('/halaman/{slug}', 'show')->name('pages.show');
 });
 
-Route::prefix('ppid')->name('ppid.')->group(function () {
-    Route::view('/tentang', 'ppid.tentang-ppid')->name('tentang');
-    Route::view('/informasi-wajib-berkala', 'ppid.informasi-wajib-berkala')->name('wajib-berkala');
-    Route::view('/informasi-tersedia-setiap-saat', 'ppid.informasi-tersedia-setiap-saat')->name('tersedia-setiap-saat');
-    Route::view('/informasi-yang-dikecualikan', 'ppid.informasi-dikecualikan')->name('dikecualikan');
+Route::view('/ppid/tentang', 'ppid.tentang-ppid')->name('ppid.tentang');
+
+Route::prefix('publikasi')->name('publikasi.')->group(function () {
+    Route::get('/berita', [BeritaController::class, 'index'])->name('berita');
+    Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita-detail');
+    Route::get('/agenda-kegiatan', [AgendaController::class, 'index'])->name('agenda');
+    Route::get('/agenda-kegiatan/{slug}', [AgendaController::class, 'show'])->name('agenda-detail');
+    Route::get('/event/{slug}', [EventController::class, 'show'])->name('event-detail');
+    Route::get('/pengumuman', [PengumumanController::class, 'index'])->name('pengumuman');
+    Route::get('/pengumuman/{slug}', [PengumumanController::class, 'show'])->name('pengumuman-detail');
+    Route::get('/lowongan-pekerjaan', [LowonganController::class, 'index'])->name('lowongan');
+    Route::get('/lowongan-pekerjaan/{slug}', [LowonganController::class, 'show'])->name('lowongan-detail');
 });
+
+// Tracer study publik: sementara diarahkan ke aplikasi lama sampai modul tracer dipindah
+Route::get('/tracer-study', fn () => redirect()->away(config('perkasa.legacy_tracer_url')))->name('tracer.index');
+
+// API lama yang mungkin dipakai sistem lain (respons JSON dipertahankan)
+Route::get('/api-perkasa/{nim}/cek-mahasiswa', CekMahasiswaController::class)
+    ->middleware('throttle:60,1')
+    ->name('api.cek-mahasiswa');
+
+// URL aplikasi lama (/perkasa2/..., /perkasa/pages/...) diarahkan 301 ke rute baru
+Route::get('/perkasa2/{path?}', LegacyRedirectController::class)->where('path', '.*');
+Route::get('/perkasa/pages/{slug}/read', fn (string $slug) => redirect(LegacyUrl::pageUrl($slug), 301));
+Route::get('/start-session', fn () => redirect()->route('login', [], 301));

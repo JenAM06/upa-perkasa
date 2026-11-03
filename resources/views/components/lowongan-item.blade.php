@@ -1,47 +1,35 @@
-{{--
-    Job row — company vacancy-detail page ("3 Lowongan Tersedia").
-    Each item also renders its own detail modal (see
-    components.lowongan-detail-modal), opened by the "Lihat Detail" button.
-
-    Props (see publikasi/lowongan-perusahaan.blade.php for the shape):
-        job       array
-        company   array
---}}
+{{-- Baris lowongan di halaman perusahaan. Parameter: $loker, $company, $aosDelay, $autoOpen --}}
 @php
-    $statusClass = match ($job['status']) {
-        'Sedang Dibuka'   => 'upa-badge-open',
-        'Terbuka'         => 'upa-badge-open',
-        'Segera Berakhir' => 'upa-badge-warning',
-        'Hampir Berakhir' => 'upa-badge-warning',
-        'Telah Tutup'     => 'upa-badge-danger',
-        'Ditutup'         => 'upa-badge-danger',
-        default           => 'upa-badge-open',
-    };
-    $modalId = 'lowonganModal-' . $job['id'];
+    [$statusClass, $statusLabel] = [
+        'dibuka' => ['upa-badge-open', 'Sedang Dibuka'],
+        'segera_berakhir' => ['upa-badge-warning', 'Segera Berakhir'],
+        'ditutup' => ['upa-badge-danger', 'Telah Tutup'],
+    ][$loker->status];
+    $modalId = 'lowonganModal-'.$loker->id;
 @endphp
 
 <div class="upa-vacancy-item" data-aos="fade-up" data-aos-delay="{{ $aosDelay ?? 0 }}">
     <div class="upa-vacancy-item__body">
         <div class="upa-vacancy-item__status">
-            <span class="upa-badge {{ $statusClass }}">{{ $job['status'] }}</span>
-            <span class="upa-vacancy-item__posted">Diposting: {{ $job['postedAgo'] }}</span>
+            <span class="upa-badge {{ $statusClass }}">{{ $statusLabel }}</span>
+            <span class="upa-vacancy-item__posted">Diposting: {{ $loker->created_at?->diffForHumans() }}</span>
         </div>
         <div class="upa-vacancy-item__actions">
-            <a href="{{ $job['applyUrl'] ?? '#' }}" class="btn btn-upa-primary">
-                <i class="bi bi-lightning-charge-fill me-1"></i>Lamar Sekarang
-            </a>
+            @if ($loker->link && $loker->status !== 'ditutup')
+                <a href="{{ $loker->link }}" target="_blank" rel="noopener" class="btn btn-upa-primary">
+                    <i class="bi bi-lightning-charge-fill me-1"></i>Lamar Sekarang
+                </a>
+            @endif
             <button type="button" class="btn btn-upa-outline" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">
                 Lihat Detail
             </button>
         </div>
 
-        <h3 class="upa-vacancy-item__title">{{ $job['title'] }}</h3>
+        <h3 class="upa-vacancy-item__title">{{ $loker->name_loker }}</h3>
 
-        @if (!empty($job['tags']))
+        @if ($loker->tingkatan_karir)
             <div class="upa-vacancy-item__tags">
-                @foreach ($job['tags'] as $tag)
-                    <span class="upa-lowongan-tag">{{ $tag }}</span>
-                @endforeach
+                <span class="upa-lowongan-tag">{{ \Illuminate\Support\Str::limit(strip_tags($loker->tingkatan_karir), 40) }}</span>
             </div>
         @endif
     </div>
@@ -50,11 +38,11 @@
 
     <div class="upa-vacancy-item__footer">
         <div class="upa-vacancy-item__meta">
-            <span class="upa-vacancy-item__deadline"><i class="bi bi-calendar-event"></i>Batas Waktu: {{ $job['deadline'] }}</span>
-            <span><i class="bi bi-eye me-1"></i>Dilihat: {{ $job['views'] }}</span>
+            <span class="upa-vacancy-item__deadline"><i class="bi bi-calendar-event"></i>Batas Waktu: {{ $loker->tanggal_loker?->translatedFormat('d F Y') ?? '-' }}</span>
+            <span><i class="bi bi-geo-alt me-1"></i>{{ \Illuminate\Support\Str::limit($loker->lokasi, 40) }}</span>
         </div>
-        <span class="upa-vacancy-item__salary"><i class="bi bi-cash-stack"></i>{{ $job['salary'] }}</span>
+        <span class="upa-vacancy-item__salary"><i class="bi bi-cash-stack"></i>{{ $loker->gaji }}</span>
     </div>
 </div>
 
-@include('components.lowongan-detail-modal', ['job' => $job, 'company' => $company, 'modalId' => $modalId])
+@include('components.lowongan-detail-modal', ['loker' => $loker, 'company' => $company, 'modalId' => $modalId, 'autoOpen' => $autoOpen ?? false])

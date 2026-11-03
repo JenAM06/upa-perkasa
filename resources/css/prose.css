@@ -1,0 +1,73 @@
+/*
+ * Konten HTML dari database (editor Summernote): berita, agenda, event,
+ * pengumuman, lowongan, dan halaman Profil/Report/PPID.
+ * Konten lama membawa style inline dan ukuran gambar acak, jadi di sini dirapikan.
+ */
+.upa-prose {
+  color: #333;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.upa-prose > :first-child { margin-top: 0; }
+.upa-prose p { margin-bottom: 1rem; }
+.upa-prose h1, .upa-prose h2, .upa-prose h3,
+.upa-prose h4, .upa-prose h5, .upa-prose h6 {
+  color: var(--upa-green-heading);
+  font-weight: 700;
+  margin: 1.75rem 0 .75rem;
+  line-height: 1.35;
+}
+.upa-prose a { color: var(--upa-green-light); text-decoration: underline; }
+.upa-prose img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 12px;
+  margin: .5rem 0;
+}
+.upa-prose iframe,
+.upa-prose video {
+  width: 100% !important;
+  max-width: 100%;
+  min-height: 420px;
+  border: 0;
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+.upa-prose table {
+  width: 100% !important;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  display: block;
+  overflow-x: auto;
+}
+.upa-prose th, .upa-prose td {
+  border: 1px solid #dfe7dd;
+  padding: .5rem .75rem;
+  vertical-align: top;
+}
+.upa-prose th { background: var(--upa-green-soft); }
+.upa-prose ul, .upa-prose ol { padding-left: 1.4rem; margin-bottom: 1rem; }
+.upa-prose blockquote {
+  border-left: 4px solid var(--upa-green-light);
+  background: var(--upa-green-soft);
+  padding: .75rem 1rem;
+  border-radius: 0 12px 12px 0;
+}
+/* Konten lama sering memakai font-family inline; samakan dengan situs */
+.upa-prose [style*="font-family"] { font-family: inherit !important; }
+
+.upa-page-block + .upa-page-block {
+  margin-top: 3rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid #e6ece4;
+}
+.upa-page-block__title {
+  color: var(--upa-green-heading);
+  font-weight: 700;
+  font-size: 1.35rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 767.98px) {
+  .upa-prose iframe, .upa-prose video { min-height: 260px; }
+}

@@ -1,66 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# UPA Perkasa Unmul (Laravel 13)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Website UPA Pengembangan Karir dan Kewirausahaan Universitas Mulawarman: portal publik, panel admin, dan (tahap berikutnya) tracer study. Pengganti aplikasi lama Laravel 5.8 di `perkasa.unmul.ac.id/perkasa2`.
 
-## About Laravel
+Acuan kebutuhan: `PRD_Backend_Redesign_UPA_Perkasa_v0.4.md`.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Aturan penting
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. **Database tidak diubah.** `db_perkasa` dipakai apa adanya (tanpa kolom/tabel baru). Folder `database/migrations` sengaja kosong. **Jangan jalankan `php artisan migrate`** di database ini.
+2. Sesi, cache, dan antrean memakai driver `file`/`sync` supaya tidak butuh tabel tambahan.
+3. Peran dibaca dari tabel Spatie lama. Kolom `model_has_roles.model_type` berisi `App\User`, dipetakan ke `App\Models\User` di `AppServiceProvider`. Jangan hapus pemetaan itu.
+4. File upload lama (nama acak 10 karakter) tetap di folder yang sama, lewat disk `legacy`.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Instalasi lokal
 
-## Learning Laravel
+```bash
+composer update laravel/sanctum   # sekali saja: membuang sanctum dari composer.lock
+composer install
+npm install && npm run build      # atau `npm run dev` saat mengembangkan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+cp .env.example .env
+php artisan key:generate
+# isi DB_* di .env, lalu impor dump db_perkasa.sql ke MySQL/MariaDB
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+php artisan storage:link          # membuat public/storages -> storage/app/legacy
+php artisan serve
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### File upload
 
-## Laravel Sponsors
+Isi `storage/app/legacy/` dari backup folder `storages/` lama:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```
+storage/app/legacy/
+├── berita/   event/   loker/   company/   user/   mahasiswa/
+└── .htaccess   (memblokir eksekusi skrip, dibawa dari aplikasi lama)
+```
 
-### Premium Partners
+Selama backup belum disalin, isi `LEGACY_ASSET_URL=https://perkasa.unmul.ac.id/storages` di `.env` agar gambar tampil dari server lama. Di Windows (Laragon), jalankan `storage:link` dari terminal Administrator.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+Cek file yang hilang:
 
-## Contributing
+```bash
+php artisan tinker
+>>> App\Models\Berita::pluck('image')->reject(fn ($f) => App\Support\LegacyStorage::exists('berita', $f))->count();
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Login
 
-## Code of Conduct
+- Admin dan perusahaan: email + password.
+- Mahasiswa Unmul: NIM + password SIA, diperiksa ke API OSM (`OSM_*` di `.env`, minta ke pengelola aplikasi lama).
+- Password lama berformat md5 otomatis diubah ke bcrypt saat login berhasil.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Struktur
 
-## Security Vulnerabilities
+```
+app/
+├── Http/Controllers/
+│   ├── Public/            portal: Home, Berita, Agenda, Event, Pengumuman, Lowongan, Page, LegacyRedirect
+│   ├── Auth/              LoginController (satu pintu untuk semua peran)
+│   ├── Panel/
+│   │   ├── CrudController.php      CRUD generik: satu pasang view untuk semua modul konten
+│   │   ├── DashboardController.php
+│   │   └── AdminPerkasa/           definisi modul (Berita, Agenda, Event, Pengumuman, Loker, Page,
+│   │                               Menu, SubMenu, Company, JobApply, MahasiswaNonUnmul,
+│   │                               AlumniLama, ProfileText)
+│   └── Api/CekMahasiswaController.php
+├── Http/Middleware/       EnsureRole (role:a|b), EnsureNotSuspended
+├── Models/                satu model per tabel lama; Concerns/ berisi trait bersama
+│   └── Concerns/          HasUniqueSlug, HasLegacyUpload, HasHtmlBody, HasLegacyRoles
+├── Services/Auth/         LegacyCredentials (bcrypt/md5), OsmLogin
+├── Support/               HtmlContent (sanitasi HTML), LegacyUrl (URL lama -> baru),
+│                          LegacyStorage (disk upload lama), ListFilter
+└── View/Composers/        NavigationComposer (navbar dari tabel menus), PanelComposer (sidebar per peran)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+config/perkasa.php         slug halaman, id menu navbar, kontak footer, OSM
+resources/views/
+├── layouts/ components/ home/ publikasi/ ppid/   portal (desain frontend, data dari database)
+├── pages/show.blade.php   semua halaman dari tabel pages (Profil, Report, PPID, /halaman/{slug})
+├── auth/ errors/
+└── panel/
+    ├── layouts/app.blade.php
+    ├── crud/              index.blade.php + form.blade.php dipakai semua modul
+    └── admin-perkasa/     view khusus (alumni lama, sejarah/visi misi, tombol suspend)
+routes/
+├── web.php                portal + redirect URL lama + API cek mahasiswa
+├── auth.php               login/logout
+└── panel.php              /panel/... per peran
+```
 
-## License
+### Menambah modul konten panel
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Buat controller yang mewarisi `CrudController` dan isi `definition()` (model, kolom tabel, field form, aturan validasi), lalu daftarkan satu baris di `routes/panel.php`. Tidak perlu membuat view. Contoh: `app/Http/Controllers/Panel/AdminPerkasa/PengumumanController.php`.
+
+### Mengganti halaman Profil/Report/PPID
+
+Konten diambil dari tabel `pages`. Jika admin membuat halaman pengganti (mis. Program Kerja 2027), ubah slug di `config/perkasa.php` bagian `pages`.
+
+## Tes
+
+Tes membaca salinan database (bukan sqlite). Buat `.env.testing` yang menunjuk ke **salinan** `db_perkasa`, lalu:
+
+```bash
+php artisan test
+```
+
+`PanelTest` membuat akun uji di dalam transaksi yang di-rollback.
+
+## Status pengerjaan
+
+| Bagian | Status |
+|---|---|
+| Fondasi Laravel 13 (struktur Laravel 11+, config, model, peran) | Selesai |
+| Portal publik tersambung database, redirect URL lama, API cek mahasiswa | Selesai |
+| Login satu pintu (email/NIM, OSM, md5 -> bcrypt) | Selesai |
+| Panel Admin Perkasa | Selesai |
+| Panel Super Admin, Company, Mahasiswa | Berikutnya |
+| Tracer study publik dan kuisioner | Berikutnya (sementara `/tracer-study` diarahkan ke aplikasi lama) |
+| Panel Admin Tracer, Surveyor, Admin Fakultas, Admin Prodi, laporan bersama | Menunggu kode terbaru dan struktur tabel dari server |
